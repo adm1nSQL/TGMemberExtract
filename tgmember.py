@@ -1,70 +1,73 @@
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.types import InputPeerEmpty
+from telethon.tl.types import InputPeerChat
 import csv
 
-apiid = 123456
-apihash = 'YOURAPIHASH'
-phone = '+111111111111'
-client = TelegramClient(phone, apiid, apihash)
+api_id = <YOUR_API_ID>
+api_hash = '<YOUR_API_HASH>'
+phone = '<YOUR_TELE_NUM>'
+client = TelegramClient(phone, api_id, api_hash)
 
 client.connect()
-if not client.isuserauthorized():
-    client.sendcoderequest(phone)
-    client.signin(phone, input('Enter the code: '))
 
+if not client.is_user_authorized():
+    client.send_code_request(phone)
+    client.sign_in(phone, input('Enter the code: '))
 
 chats = []
-lastdate = None
-chunksize = 200
-groups=[]
- 
+last_date = None
+chunk_size = 200
+groups = []
+
 result = client(GetDialogsRequest(
-             offsetdate=lastdate,
-             offsetid=0,
-             offsetpeer=InputPeerEmpty(),
-             limit=chunksize,
-             hash = 0
+             offset_date=last_date,
+             offset_id=0,
+             offset_peer=InputPeerEmpty(),
+             limit=chunk_size,
+             hash=0
          ))
+
 chats.extend(result.chats)
 
 for chat in chats:
     try:
-        if chat.megagroup== True:
+        if chat.megagroup == True:
             groups.append(chat)
     except:
         continue
 
-print('Choose a group to extract members from:')
-i=0
+print('Choose a group to scrape members from:')
+i = 0
 for g in groups:
     print(str(i) + '- ' + g.title)
-    i+=1
+    i += 1
 
-gindex = input("Enter a Number: ")
-targetgroup=groupsint(g_index)
+g_index = input("Enter a Number: ")
+target_group = groups[int(g_index)]
 
 print('Fetching Members...')
-allparticipants = []
-allparticipants = client.getparticipants(targetgroup, aggressive=True)
+all_participants = []
+all_participants = client.get_participants(target_group, aggressive=True)
 
 print('Saving In file...')
 with open("members.csv","w",encoding='UTF-8') as f:
     writer = csv.writer(f,delimiter=",",lineterminator="\n")
-    writer.writerow('username','user id', 'access hash','name','group', 'group id')
-    for user in allparticipants:
+    writer.writerow(['username','user id', 'access hash','name','group', 'group id'])
+
+    for user in all_participants:
         if user.username:
             username= user.username
         else:
             username= ""
-        if user.firstname:
-            firstname= user.firstname
+        if user.first_name:
+            first_name= user.first_name
         else:
-            firstname= ""
-        if user.lastname:
-            lastname= user.lastname
+            first_name= ""
+        if user.last_name:
+            last_name= user.last_name
         else:
-            lastname= ""
-        name= (firstname + ' ' + lastname).strip()
-        writer.writerow([username,user.id,user.accesshash,name,targetgroup.title, targetgroup.id])      
-print('Members extract successfully.')
+            last_name= ""
+        name= (first_name + ' ' + last_name).strip()
+        writer.writerow([username,user.id,user.access_hash,name,target_group.title, target_group.id])      
+print('Members scraped successfully.')
